@@ -30,7 +30,7 @@ HAL_JSON    = "/etc/camera/ipu7x/sensors/ov08x40-uf.json"
 # 1080p/60 is probed first; HAL JSON only declares 30fps max, so it will likely
 # fail and fall through — but costs nothing to try.
 PREFERRED_RESOLUTIONS = [
-    (3840, 2160, 30),   # confirmed working: full sensor resolution
+    (3840, 2160, 30),   # confirmed working: full sensor resolution, hardware-limited to 30fps
     (1920, 1080, 60),   # confirmed working: HAL JSON declares 30fps max but 60 accepted
     (1920, 1080, 30),
     (1280,  720, 30),
