@@ -30,8 +30,8 @@ HAL_JSON    = "/etc/camera/ipu7x/sensors/ov08x40-uf.json"
 # 1080p/60 is probed first; HAL JSON only declares 30fps max, so it will likely
 # fail and fall through — but costs nothing to try.
 PREFERRED_RESOLUTIONS = [
-    (1920, 1080, 60),   # probe: HAL may not support this
-    (3840, 2160, 30),
+    (3840, 2160, 30),   # confirmed working: full sensor resolution
+    (1920, 1080, 60),   # confirmed working: HAL JSON declares 30fps max but 60 accepted
     (1920, 1080, 30),
     (1280,  720, 30),
     ( 640,  480, 30),
@@ -64,19 +64,15 @@ def read_hal_resolutions():
         # fpsRange = list of (min, max) pairs → take overall max
         fps_vals = meta.get("fpsRange", [30])
         hal_max_fps = max(fps_vals)
-        ordered = [
+        # Keep PREFERRED_RESOLUTIONS order exactly; include all sizes in supported_sizes
+        # regardless of fps (probe candidates like 60fps stay in declared position).
+        high_fps = [(w, h, fps) for w, h, fps in PREFERRED_RESOLUTIONS if fps > hal_max_fps]
+        if high_fps:
+            log(f"[res] HAL 声明最高 {hal_max_fps}fps；仍探测高帧率候选: {high_fps}")
+        result = [
             (w, h, fps) for w, h, fps in PREFERRED_RESOLUTIONS
-            if (w, h) in supported_sizes and fps <= hal_max_fps
+            if (w, h) in supported_sizes
         ]
-        # Always include the 60fps probe candidates (even if hal_max_fps < 60),
-        # so the user can test whether the HAL actually accepts them.
-        probes = [
-            (w, h, fps) for w, h, fps in PREFERRED_RESOLUTIONS
-            if fps > hal_max_fps
-        ]
-        if probes:
-            log(f"[res] HAL 声明最高 {hal_max_fps}fps；仍探测高帧率候选: {probes}")
-        result = probes + ordered
         if result:
             return result
     except Exception as e:
