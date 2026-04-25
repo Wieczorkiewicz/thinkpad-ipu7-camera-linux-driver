@@ -132,7 +132,7 @@ Environment=CAMERA_RESOLUTION=1920x1080x60
 
 ## Known limitations
 
-- **First activation after boot takes ~10–15 s.** The HAL and firmware need a cold start. Subsequent activations within the same session are near-instant even though the HAL is fully shut down between uses — the firmware stays resident in memory.
+- **First activation after boot may take a few seconds** while the HAL and firmware initialise. In practice this has not been noticeably slow. Subsequent activations are near-instant.
 - **Firefox / Zen (help wanted):** camera access via the xdg-desktop-portal Camera interface does not currently work. The device is detected (`getUserMedia()` resolves the device list), but the stream never starts.
 
   The path Firefox uses: Firefox → xdg-desktop-portal (Camera interface) → PipeWire → WirePlumber v4l2 node for `/dev/video32`.
