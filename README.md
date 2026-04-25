@@ -138,3 +138,19 @@ Intel's IPU7 HAL keeps the camera sensor powered — LED on — even in GStreame
 ### colorimetry
 
 `icamerasrc` outputs NV12. The pipeline converts to YUY2 with `colorimetry=bt601` before writing to v4l2loopback, matching what `videotestsrc` produces in IDLE state and avoiding format negotiation failures on activation.
+
+---
+
+## Other sensors on the same hardware (potential future work)
+
+The ThinkPad X1 2-in-1 Gen 10 (Lunar Lake) has two more sensor subsystems beyond the RGB camera:
+
+**IR camera (face recognition)**
+
+The IR sensor (`INT347D`, managed by Intel CVS `INTC10DE`) is physically present and its kernel driver (`intel_cvs`) loads successfully. It does not appear as a usable video node today — no `icamerasrc` device index has been confirmed for it. On Windows it powers face-unlock (Windows Hello). There is no Linux face-recognition framework that supports it yet, but the hardware path through the IPU7 ISP may be explorable via `icamerasrc device-name=1` or similar.
+
+**Presence detection**
+
+A human-presence sensor (also routed through Intel CVS) feeds data via the Intel Sensor Hub (ISH) and surfaces as `HID-SENSOR-2000e1` in sysfs — not as a video node. Writing `1` to its `enable_sensor` attribute appears to activate it, but interpreting the output data and building a userspace daemon that triggers screen wake / lock has not been attempted. The ISH firmware is already installed at `/lib/firmware/LENOVO/ish/`.
+
+Both are independent of this project and do not require any changes here to develop further.
