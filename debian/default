@@ -1,0 +1,9 @@
+# ipu7-camera configuration
+# CAMERA_USER and PIPEWIRE_RUNTIME_DIR are set by the postinst script.
+# To change the target user after installation, edit this file and
+# run: systemctl restart ipu7-camera-dynamic
+CAMERA_USER=
+PIPEWIRE_RUNTIME_DIR=/run/user/1000
+
+# Resolution: auto (highest supported, from HAL sensor config) or explicit e.g. 1920x1080
+CAMERA_RESOLUTION=auto

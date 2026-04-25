@@ -1,0 +1,16 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_install:
+	install -Dm755 src/ipu7-camera-dynamic.py \
+	               debian/ipu7-camera/usr/sbin/ipu7-camera-dynamic
+	install -Dm644 wireplumber/51-ipu7-camera.conf \
+	               debian/ipu7-camera/etc/wireplumber/wireplumber.conf.d/51-ipu7-camera.conf
+	install -Dm644 modprobe/v4l2loopback-ipu7.conf \
+	               debian/ipu7-camera/etc/modprobe.d/v4l2loopback-ipu7.conf
+	install -Dm644 debian/default \
+	               debian/ipu7-camera/etc/default/ipu7-camera
+
+override_dh_installsystemd:
+	dh_installsystemd --name=ipu7-camera-dynamic

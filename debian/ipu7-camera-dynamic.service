@@ -1,0 +1,13 @@
+[Unit]
+Description=IPU7 Camera Dynamic Bridge (on-demand LED)
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/ipu7-camera-led
+ExecStart=/usr/sbin/ipu7-camera-dynamic
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

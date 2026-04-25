@@ -1,0 +1,42 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    configure)
+        # Auto-detect the primary human user (uid 1000–60000, with a login shell)
+        PRIMARY_USER=$(getent passwd \
+            | awk -F: '$3 >= 1000 && $3 < 60000 && $7 !~ /nologin|false|sync/ {print $1; exit}')
+
+        if [ -n "$PRIMARY_USER" ]; then
+            PRIMARY_UID=$(id -u "$PRIMARY_USER")
+            # Only rewrite if the file still has the placeholder values
+            if grep -q '^CAMERA_USER=$' /etc/default/ipu7-camera 2>/dev/null; then
+                sed -i \
+                    -e "s|^CAMERA_USER=.*|CAMERA_USER=$PRIMARY_USER|" \
+                    -e "s|^PIPEWIRE_RUNTIME_DIR=.*|PIPEWIRE_RUNTIME_DIR=/run/user/$PRIMARY_UID|" \
+                    /etc/default/ipu7-camera
+            fi
+        fi
+
+        # Patch v4l2loopback driver name to "uvcvideo" so Firefox/Zen can enumerate
+        # /dev/video99 (they reject any device whose VIDIOC_QUERYCAP driver != "uvcvideo").
+        V4L2_SRC=$(find /usr/src -maxdepth 2 -name "v4l2loopback.c" 2>/dev/null \
+                   | sort -V | tail -1)
+        if [ -n "$V4L2_SRC" ] && grep -q '"v4l2 loopback"' "$V4L2_SRC" 2>/dev/null; then
+            V4L2_VER=$(basename "$(dirname "$V4L2_SRC")" | sed 's/v4l2loopback-//')
+            cp "$V4L2_SRC" "${V4L2_SRC}.orig-ipu7-camera" 2>/dev/null || true
+            sed -i 's/"v4l2 loopback"/"uvcvideo"/g' "$V4L2_SRC"
+            dkms build   "v4l2loopback/$V4L2_VER" -q 2>/dev/null || true
+            dkms install "v4l2loopback/$V4L2_VER" --force -q 2>/dev/null || true
+        fi
+
+        # Load / reload v4l2loopback with the new modprobe options
+        if lsmod | grep -q v4l2loopback; then
+            systemctl stop ipu7-camera-dynamic 2>/dev/null || true
+            modprobe -r v4l2loopback 2>/dev/null || true
+        fi
+        modprobe v4l2loopback 2>/dev/null || true
+        ;;
+esac
+
+#DEBHELPER#
