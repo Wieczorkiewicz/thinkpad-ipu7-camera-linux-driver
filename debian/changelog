@@ -1,3 +1,13 @@
+ipu7-camera (1.0.1-1) unstable; urgency=medium
+
+  * Add 60fps resolution candidates for 720p and 480p.
+  * Translate all inline comments and log messages to English.
+  * Document Intel CVS resume bug blocking presence sensor sysfs.
+  * Add scripts/cvs-probe.sh for exploring IR camera and presence sensor.
+  * Update package description to reflect on-demand HAL activation framing.
+
+ -- Wieczorkiewicz <wieczorkiewicz@users.noreply.github.com>  Fri, 25 Apr 2026 00:00:00 +0000
+
 ipu7-camera (1.0.0-1) unstable; urgency=medium
 
   * Initial release.

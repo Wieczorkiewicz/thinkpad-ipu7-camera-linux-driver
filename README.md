@@ -63,7 +63,7 @@ You should see a preview window and the camera LED should turn on.
 Download the latest `.deb` from the [Releases](https://github.com/Wieczorkiewicz/thinkpad-ipu7-camera-linux-driver/releases) page and install:
 
 ```bash
-sudo apt install ./ipu7-camera_1.0.0-1_all.deb
+sudo apt install ./ipu7-camera_1.0.1-1_all.deb
 ```
 
 ### Arch Linux (AUR)

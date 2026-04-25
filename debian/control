@@ -16,17 +16,18 @@ Depends: ${misc:Depends},
  gstreamer1.0-plugins-bad,
  v4l2loopback-dkms
 Recommends: gstreamer1.0-icamerasrc
-Description: On-demand LED control for Intel IPU7 cameras
- Manages the camera LED on Intel IPU7 devices (ThinkPad X1 2-in-1 Gen 10
- and similar Lunar Lake systems) so it lights up only when an application
- is actively using the camera.
+Description: On-demand Intel IPU7 camera activation for Lunar Lake systems
+ Manages the Intel IPU7 camera HAL on ThinkPad X1 2-in-1 Gen 10 and similar
+ Lunar Lake systems. The HAL is started only when an application opens the
+ camera and fully shut down the moment the application stops, so the LED
+ accurately reflects actual usage.
  .
  A single GStreamer process holds a dual-source pipeline: videotestsrc feeds
  black frames while idle; icamerasrc is started on demand when an application
- opens the camera and shut down (LED off) when it stops.
+ opens the camera and driven back to NULL (HAL released, LED off) when it stops.
  .
- The virtual camera device /dev/video32 ("IPU7 Camera") is visible to Zoom
- and other V4L2-based applications. A PipeWire node is also published for
- Flatpak and portal-based applications (Brave, Signal, Telegram).
+ The virtual camera device /dev/video32 ("IPU7 Camera") is visible to Zoom,
+ Telegram, WeChat, Element, and other V4L2-based applications. A PipeWire
+ node is also published for Flatpak and portal-based applications (Brave, Signal).
  .
  Requires icamerasrc and the Intel IPU7 Camera HAL to be installed separately.
