@@ -109,7 +109,15 @@ Environment=CAMERA_RESOLUTION=1920x1080x60
 ## Known limitations
 
 - **Every activation takes ~10–15 s.** The HAL must initialise from scratch each time the camera is opened. This is the cost of fully releasing the sensor between uses — keeping the HAL in PAUSED would be faster but would leave the sensor (and LED) on permanently.
-- **Firefox / Zen:** camera access via the xdg-desktop-portal Camera interface does not currently work. Direct V4L2 access (most native apps) and PipeWire access (Flatpak apps) both work.
+- **Firefox / Zen (help wanted):** camera access via the xdg-desktop-portal Camera interface does not currently work. The device is detected (`getUserMedia()` resolves the device list), but the stream never starts.
+
+  The path Firefox uses: Firefox → xdg-desktop-portal (Camera interface) → PipeWire → WirePlumber v4l2 node for `/dev/video32`.
+
+  What we know: WirePlumber successfully creates a PipeWire node from `/dev/video32` and the portal connects to it, but the connection drops after ~2 seconds — before any frames are delivered to the browser. The `pipewiresink` node in our pipeline has `object.register=false` and is therefore invisible to the portal; the portal uses the separate WirePlumber-managed node instead. The drop appears to be a format negotiation failure between Firefox's PipeWire consumer and the WirePlumber node, but the root cause has not been pinned down. KDE Plasma 6 + Wayland runs two portal backends (KDE and GTK) simultaneously, which may also be a factor.
+
+  Other apps work fine: native V4L2 apps (Zoom, Telegram desktop) read `/dev/video32` directly; Flatpak apps (Brave, Signal) connect via PipeWire to the `pipewiresink` node.
+
+  If you have experience with WirePlumber session management or xdg-desktop-portal on KDE Plasma 6, contributions are very welcome.
 
 ---
 
