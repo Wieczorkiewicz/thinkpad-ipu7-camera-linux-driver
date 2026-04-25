@@ -21,8 +21,11 @@ import os, re, sys, time, threading
 
 Gst.init(None)
 
-DEVICE      = "/dev/video99"
-SYSFS_STATE = "/sys/devices/virtual/video4linux/video99/state"
+DEVICE      = "/dev/video99"    # primary: 4K (Brave, Signal, gstreamer)
+DEVICE_HD   = "/dev/video98"    # compat:  1080p@30 (Zoom, legacy apps)
+SYSFS_STATE  = "/sys/devices/virtual/video4linux/video99/state"
+SYSFS_STATE2 = "/sys/devices/virtual/video4linux/video98/state"
+CAPS_HD     = "video/x-raw,format=YUY2,width=1920,height=1080,framerate=30/1,colorimetry=bt601"
 STOP_DELAY  = 0
 HAL_JSON    = "/etc/camera/ipu7x/sensors/ov08x40-uf.json"
 
@@ -122,11 +125,19 @@ class CameraSwitch:
                      f"framerate={fps}/1,colorimetry=bt601")
         caps_nv12 = f"video/x-raw,format=NV12,width={w},height={h},framerate={fps}/1"
 
+        import os as _os
+        has_hd = _os.path.exists(DEVICE_HD)
+        hd_branch = (
+            f'  t. ! queue ! videoscale ! capsfilter caps="{CAPS_HD}" '
+            f'! v4l2sink device={DEVICE_HD} sync=false '
+        ) if has_hd else ''
+
         desc = (
             f'input-selector name=sel sync-streams=false '
             f'! capsfilter caps="{caps_yuy2}" '
             f'! tee name=t '
             f'  t. ! queue ! v4l2sink device={DEVICE} sync=false '
+            + hd_branch +
             f'  t. ! queue ! pipewiresink mode=2 stream-properties="{PW_PROPS}" '
             f'videotestsrc pattern=black is-live=true name=idle '
             f'! capsfilter caps="{caps_yuy2}" '
@@ -243,6 +254,7 @@ class CameraSwitch:
     def _fd_openers(self):
         result = set()
         my_pid = os.getpid()
+        watched = {DEVICE, DEVICE_HD}
         try:
             for pid_s in os.listdir('/proc'):
                 if not pid_s.isdigit() or int(pid_s) == my_pid:
@@ -250,7 +262,7 @@ class CameraSwitch:
                 try:
                     for fd in os.listdir(f'/proc/{pid_s}/fd'):
                         try:
-                            if os.readlink(f'/proc/{pid_s}/fd/{fd}') == DEVICE:
+                            if os.readlink(f'/proc/{pid_s}/fd/{fd}') in watched:
                                 result.add(int(pid_s))
                                 break
                         except OSError:
@@ -262,15 +274,17 @@ class CameraSwitch:
         return result
 
     def is_captured(self):
-        # Requires BOTH: sysfs state=="capture" (STREAMON active) AND fd held by external process.
-        # If either is gone, camera is not truly in use:
-        #   - STREAMOFF fired → state changes → fast deactivation
-        #   - fd closed without STREAMOFF → fd check fails → handles stale sysfs state
-        try:
-            state_ok = open(SYSFS_STATE).read().strip() == "capture"
-        except OSError:
-            state_ok = True  # can't read → be conservative, fall through to fd check
-        if not state_ok:
+        # Check both loopback devices. Require EITHER sysfs state=="capture" AND fd open.
+        # OSError (device not yet created) → treat as not capturing, not as conservative True.
+        any_capturing = False
+        for sysfs in (SYSFS_STATE, SYSFS_STATE2):
+            try:
+                if open(sysfs).read().strip() == "capture":
+                    any_capturing = True
+                    break
+            except OSError:
+                pass  # device doesn't exist yet — not capturing
+        if not any_capturing:
             return False
         return bool(self._fd_openers())
 
