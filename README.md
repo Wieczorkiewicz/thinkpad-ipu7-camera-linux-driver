@@ -177,6 +177,8 @@ The IR sensor (`INT347D`, managed by Intel CVS `INTC10DE`) is physically present
 
 **Presence detection**
 
-A human-presence sensor (also routed through Intel CVS) feeds data via the Intel Sensor Hub (ISH) and surfaces as `HID-SENSOR-2000e1` in sysfs — not as a video node. Writing `1` to its `enable_sensor` attribute appears to activate it, but interpreting the output data and building a userspace daemon that triggers screen wake / lock has not been attempted. The ISH firmware is already installed at `/lib/firmware/LENOVO/ish/`.
+A human-presence sensor (also routed through Intel CVS) feeds data via the Intel Sensor Hub (ISH) and surfaces as 23 `HID-SENSOR-2000e1` nodes in sysfs — not as a video node. The ISH firmware is already installed at `/lib/firmware/LENOVO/ish/`.
+
+In practice, the sysfs values do not update: the `intel_cvs` driver has a resume bug where the CVS chip's response GPIO stays asserted after the driver's own suspend cycle (`cvs_resume: Wrong gpio_response val:1 read via bridge`). The driver logs the error but does not attempt a GPIO reset, leaving the CVS chip unable to communicate with the ISH firmware. As a result, `enable_sensor` eventually returns `Invalid argument` and no presence data flows. This is a driver-level issue requiring a fix in `intel_cvs.c` (the reset GPIO `icvs->rst` exists but is unused in the resume path).
 
 Both are independent of this project and do not require any changes here to develop further.
