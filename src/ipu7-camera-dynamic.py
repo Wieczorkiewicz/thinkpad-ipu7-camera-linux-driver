@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-ipu7-camera-dynamic — 静态双 source pipeline：
-  IDLE:   icamerasrc 锁在 NULL，videotestsrc 输出黑帧
-  ACTIVE: icamerasrc NULL→PLAYING（首次冷启动可能需数秒，之后即时），selector 切换到它
+ipu7-camera-dynamic — static dual-source pipeline:
+  IDLE:   icamerasrc locked in NULL, videotestsrc feeds black frames
+  ACTIVE: icamerasrc NULL→PLAYING (first cold start may take a few seconds),
+          input-selector switches to it
 
-分辨率自动选择：启动时按 PREFERRED_RESOLUTIONS 优先级从 HAL JSON 筛选，
-依次尝试到 PAUSED 成功为止。支持 CAMERA_RESOLUTION 环境变量覆盖。
+Resolution is selected at startup from the HAL JSON using PREFERRED_RESOLUTIONS
+priority order, trying each until PAUSED succeeds. Overridable via CAMERA_RESOLUTION.
 """
 import gi
 gi.require_version('Gst', '1.0')
@@ -21,7 +22,7 @@ SYSFS_STATE = "/sys/devices/virtual/video4linux/video32/state"
 STOP_DELAY  = 0
 HAL_JSON    = "/etc/camera/ipu7x/sensors/ov08x40-uf.json"
 
-# 优先级从高到低；高帧率候选即使 HAL 声明不支持也会被探测
+# Highest priority first; high-fps candidates are probed even if HAL reports lower max fps
 PREFERRED_RESOLUTIONS = [
     (3840, 2160, 30),
     (1920, 1080, 60),
@@ -53,7 +54,7 @@ def read_hal_resolutions():
         hal_max_fps = max(fps_vals)
         high_fps = [(w, h, f) for w, h, f in PREFERRED_RESOLUTIONS if f > hal_max_fps]
         if high_fps:
-            log(f"[res] HAL 声明最高 {hal_max_fps}fps；仍探测高帧率候选: {high_fps}")
+            log(f"[res] HAL reports max {hal_max_fps}fps; probing high-fps candidates anyway: {high_fps}")
         result = [
             (w, h, f) for w, h, f in PREFERRED_RESOLUTIONS
             if (w, h) in supported_sizes
@@ -61,15 +62,15 @@ def read_hal_resolutions():
         if result:
             return result
     except Exception as e:
-        log(f"[res] 无法解析 HAL JSON: {e}")
+        log(f"[res] could not parse HAL JSON: {e}")
     return [(1920, 1080, 30), (1280, 720, 30)]
 
 
 def resolution_candidates():
     """
-    CAMERA_RESOLUTION=auto (默认) → 从 HAL JSON 读取，高到低。
-    CAMERA_RESOLUTION=1920x1080    → 直接使用，fps 默认 30。
-    CAMERA_RESOLUTION=1920x1080x60 → 使用指定 fps。
+    CAMERA_RESOLUTION=auto (default) — read from HAL JSON, highest first.
+    CAMERA_RESOLUTION=1920x1080      — use exactly, fps defaults to 30.
+    CAMERA_RESOLUTION=1920x1080x60   — use exactly with specified fps.
     """
     cfg = os.environ.get("CAMERA_RESOLUTION", "auto").strip().lower()
     if cfg != "auto":
@@ -81,7 +82,7 @@ def resolution_candidates():
                 return [(int(parts[0]), int(parts[1]), 30)]
         except ValueError:
             pass
-        log(f"[res] 无法解析 CAMERA_RESOLUTION={cfg!r}，退回 auto")
+        log(f"[res] cannot parse CAMERA_RESOLUTION={cfg!r}, falling back to auto")
     return read_hal_resolutions()
 
 
@@ -100,8 +101,6 @@ class CameraSwitch:
 
     def _res_tag(self):
         return f"{self.res_w}×{self.res_h}@{self.res_fps}"
-
-    # ── 构建 pipeline ────────────────────────────────────────────────────────
 
     def build(self, w, h, fps):
         self.res_w, self.res_h, self.res_fps = w, h, fps
@@ -141,14 +140,14 @@ class CameraSwitch:
             self.sel = self.icam = None
 
     def start(self):
-        """Pipeline → PAUSED → PLAYING。成功返回 True，失败清理并返回 False。"""
+        """Bring pipeline to PAUSED then PLAYING. Returns True on success, False on failure."""
         self.icam.set_locked_state(True)
 
-        log(f"[{self._res_tag()}] Pipeline → PAUSED（icamerasrc 锁在 NULL）...")
+        log(f"[{self._res_tag()}] pipeline → PAUSED (icamerasrc locked in NULL)...")
         self.pipeline.set_state(Gst.State.PAUSED)
         ret = self.pipeline.get_state(15 * Gst.SECOND)
         if ret[0] == Gst.StateChangeReturn.FAILURE:
-            log(f"[{self._res_tag()}] PAUSED 失败")
+            log(f"[{self._res_tag()}] PAUSED failed")
             self._teardown()
             return False
         log(f"[{self._res_tag()}] PAUSED OK")
@@ -163,17 +162,15 @@ class CameraSwitch:
         self.idle_pad = pads.get("sink_0")
         self.icam_pad = pads.get("sink_1")
         if not self.idle_pad or not self.icam_pad:
-            log(f"FATAL: 找不到 sel sink pads: {list(pads.keys())}")
+            log(f"FATAL: selector sink pads not found: {list(pads.keys())}")
             self._teardown()
             return False
         log(f"idle pad: {self.idle_pad.name}, icam pad: {self.icam_pad.name}")
 
         self.sel.set_property("active-pad", self.idle_pad)
         self.pipeline.set_state(Gst.State.PLAYING)
-        log(f"Pipeline running — IDLE @ {self._res_tag()}")
+        log(f"pipeline running — IDLE @ {self._res_tag()}")
         return True
-
-    # ── 状态切换 ─────────────────────────────────────────────────────────────
 
     def go_active(self):
         with self.lock:
@@ -181,13 +178,13 @@ class CameraSwitch:
                 return
             self.is_active = True
 
-        log(f"激活摄像头（icamerasrc → PLAYING）@ {self._res_tag()}")
+        log(f"activating camera (icamerasrc → PLAYING) @ {self._res_tag()}")
         self.icam.set_locked_state(False)
         self.icam.set_state(Gst.State.PLAYING)
 
         ret = self.icam.get_state(20 * Gst.SECOND)
         if ret[0] == Gst.StateChangeReturn.FAILURE:
-            log("ERROR: icamerasrc 无法到达 PLAYING，取消激活")
+            log("ERROR: icamerasrc could not reach PLAYING, aborting activation")
             self.icam.set_locked_state(True)
             with self.lock:
                 self.is_active = False
@@ -195,7 +192,7 @@ class CameraSwitch:
 
         time.sleep(0.5)
         self.sel.set_property("active-pad", self.icam_pad)
-        log("ACTIVE — 真实摄像头输出，LED 亮")
+        log("ACTIVE — real camera output, LED on")
 
     def go_idle(self):
         with self.lock:
@@ -203,15 +200,13 @@ class CameraSwitch:
                 return
             self.is_active = False
 
-        log("切换到 idle（LED 灭）...")
+        log("switching to idle (LED off)...")
         self.sel.set_property("active-pad", self.idle_pad)
         time.sleep(0.3)
         self.icam.set_state(Gst.State.NULL)
         self.icam.get_state(20 * Gst.SECOND)
         self.icam.set_locked_state(True)
-        log("IDLE — LED 灭")
-
-    # ── capturer 监测 ────────────────────────────────────────────────────────
+        log("IDLE — LED off")
 
     def _fd_openers(self):
         result = set()
@@ -253,13 +248,13 @@ class CameraSwitch:
             if capturing:
                 no_capture_since = None
                 if not is_active:
-                    log("检测到 capturer（STREAMON + fd）→ 激活")
+                    log("capturer detected (STREAMON + fd open) — activating")
                     threading.Thread(target=self.go_active, daemon=True).start()
             else:
                 if is_active:
                     if no_capture_since is None:
                         no_capture_since = time.time()
-                        log(f"capturer 停止 — {STOP_DELAY}s 后切换到 idle")
+                        log(f"capturer gone — switching to idle in {STOP_DELAY}s")
                     elif time.time() - no_capture_since >= STOP_DELAY:
                         no_capture_since = None
                         threading.Thread(target=self.go_idle, daemon=True).start()
@@ -267,24 +262,22 @@ class CameraSwitch:
                     no_capture_since = None
             time.sleep(0.3)
 
-    # ── 入口 ─────────────────────────────────────────────────────────────────
-
     def run(self):
         candidates = resolution_candidates()
-        log(f"[res] 分辨率候选（高到低）: {candidates}")
+        log(f"[res] candidates (highest first): {candidates}")
 
         started = False
         for w, h, fps in candidates:
-            log(f"[res] 尝试 {w}×{h}@{fps}...")
+            log(f"[res] trying {w}×{h}@{fps}...")
             self.build(w, h, fps)
             if self.start():
-                log(f"[res] 使用 {w}×{h}@{fps}fps")
+                log(f"[res] using {w}×{h}@{fps}fps")
                 started = True
                 break
-            log(f"[res] {w}×{h}@{fps} 失败，尝试下一个")
+            log(f"[res] {w}×{h}@{fps} failed, trying next")
 
         if not started:
-            log("FATAL: 所有分辨率均失败，退出")
+            log("FATAL: all resolutions failed, exiting")
             sys.exit(1)
 
         threading.Thread(target=self.monitor_loop, daemon=True).start()
