@@ -38,7 +38,7 @@ These must be working **before** running the installer:
 
 | Component | How to get it |
 |-----------|---------------|
-| Linux kernel with IPU7 ISP support | Ubuntu 26.04 kernel 7.0.0+ includes it |
+| Linux kernel with IPU7 ISP support | Mainline Linux 6.17+ (merged upstream); Ubuntu 26.04 ships kernel 7.0.0+ which includes it |
 | `intel-ipu7-dkms` (IPU7 kernel driver) | OEM / PPA / build from source |
 | Intel Camera HAL (`libcamhal`) | Build from [intel/ipu7-camera-hal](https://github.com/intel/ipu7-camera-hal) |
 | `icamerasrc` GStreamer plugin | Build from [intel/icamerasrc](https://github.com/intel/icamerasrc) |
