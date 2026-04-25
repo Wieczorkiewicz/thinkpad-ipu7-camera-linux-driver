@@ -2,7 +2,7 @@
 
 On-demand Intel IPU7 camera activation for Linux.
 
-Targets ThinkPad X1 2-in-1 Gen 10 (Intel Lunar Lake) running Ubuntu 24.04 / 26.04, but should work on any system where `icamerasrc` is functional.
+Tested on ThinkPad X1 2-in-1 Gen 10 (Intel Lunar Lake) running Ubuntu 24.04 / 26.04. The Intel IPU7 driver was merged into mainline Linux 6.17 and covers both Lunar Lake and the upcoming Panther Lake, so this project should work on any IPU7-equipped system where `icamerasrc` is functional — though only Lunar Lake has been tested so far.
 
 **The problem:** Intel's IPU7 HAL (`icamerasrc`) cannot be shared between processes and keeps the camera sensor fully powered whenever it is running — even when no app is actually using the camera.
 
