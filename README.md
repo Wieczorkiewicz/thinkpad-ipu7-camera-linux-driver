@@ -157,7 +157,7 @@ The device number matters. Apps like Zoom and Telegram do not enumerate the full
 
 ### Why NULL and not PAUSED?
 
-Intel's IPU7 HAL keeps the camera sensor powered — LED on — even in GStreamer's PAUSED state. Only transitioning to NULL fully releases the sensor. This costs ~10–15 s on each activation but is the only way to reliably release hardware between uses.
+Intel's IPU7 HAL keeps the camera sensor powered — LED on — even in GStreamer's PAUSED state. Only transitioning to NULL fully releases the sensor. This is the only way to reliably release hardware between uses; in practice reactivation is near-instant.
 
 ### colorimetry
 
