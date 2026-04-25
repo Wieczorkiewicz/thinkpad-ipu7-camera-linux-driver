@@ -175,7 +175,7 @@ The ThinkPad X1 2-in-1 Gen 10 (Lunar Lake) has two more sensor subsystems beyond
 
 The IR sensor (`INT347D`, managed by Intel CVS `INTC10DE`) is physically present and its kernel driver (`intel_cvs`) loads successfully. It does not appear as a usable video node today — no `icamerasrc` device index has been confirmed for it. There is no Linux face-recognition framework that supports it yet, but the hardware path through the IPU7 ISP may be explorable via `icamerasrc device-name=1` or similar.
 
-Note: the ThinkPad physical camera shutter covers the entire camera array. When the shutter is closed, Windows Hello cannot recognise the face — suggesting the RGB camera is also part of the recognition pipeline, not just the IR camera.
+Note: the ThinkPad physical camera shutter covers only the RGB camera, not the IR camera. When the shutter is closed, Windows Hello cannot recognise the face even though the IR camera remains unobstructed — confirming that the RGB camera is also part of the recognition pipeline, not just the IR sensor.
 
 **Presence detection**
 
