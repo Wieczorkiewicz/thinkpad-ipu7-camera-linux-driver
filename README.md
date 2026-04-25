@@ -21,7 +21,7 @@ icamerasrc (IPU7 camera)   ──┘                          └─ pipewiresin
 ```
 
 - **IDLE:** `icamerasrc` is locked in NULL state — HAL not running, sensor off, LED off. `videotestsrc` feeds black frames to keep `/dev/video32` visible to apps that enumerate devices at startup.
-- **ACTIVE:** when an app opens `/dev/video32`, `icamerasrc` transitions to PLAYING (HAL initialises, ~10–15 s on first use), the selector switches to real frames, LED on.
+- **ACTIVE:** when an app opens `/dev/video32`, `icamerasrc` transitions to PLAYING (HAL initialises; first cold start may take a few seconds), the selector switches to real frames, LED on.
 - When the app closes the camera, the service detects it within ~300 ms and drives `icamerasrc` back to NULL → HAL fully released, LED off.
 
 Detection combines two signals:
@@ -169,7 +169,7 @@ Intel's IPU7 HAL keeps the camera sensor powered — LED on — even in GStreame
 
 ## Other sensors on the same hardware (potential future work)
 
-The ThinkPad X1 2-in-1 Gen 10 (Lunar Lake) has two more sensor subsystems beyond the RGB camera. On Windows, these work together as a seamless unlock sequence: the presence sensor wakes the machine when someone approaches, the IR illuminator and IR camera activate for Windows Hello face recognition, and an IR floodlight briefly fires to assist in low light. If the face is recognised the screen unlocks immediately; otherwise it falls back to fingerprint or PIN. All three components are physically present on Linux — none of them are fully functional yet.
+The ThinkPad X1 2-in-1 Gen 10 (Lunar Lake) has two more sensor subsystems beyond the RGB camera. On Windows, these work together as a seamless unlock sequence: the presence sensor wakes the machine when someone approaches, the IR illuminator and IR camera activate for Windows Hello face recognition, and a white flash LED briefly fires to assist the RGB camera in low light. If the face is recognised the screen unlocks immediately; otherwise it falls back to fingerprint or PIN. All three components are physically present on Linux — none of them are fully functional yet.
 
 **IR camera (face recognition)**
 
