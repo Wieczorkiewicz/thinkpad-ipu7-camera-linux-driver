@@ -153,7 +153,7 @@ Environment=CAMERA_RESOLUTION=1920x1080x60
 
 ### Why /dev/video32?
 
-The device number matters. Apps like Zoom and Telegram enumerate `/dev/video0` through approximately `/dev/video33` and stop there — they simply do not see higher-numbered devices. Earlier versions of this project used `/dev/video99`, which worked for PipeWire-based apps (Brave, Signal) but was invisible to Zoom and Telegram entirely. `/dev/video32` was chosen as the highest number that reliably falls within the scan range of these apps while leaving `/dev/video0`–`/dev/video31` free for other devices. The raw IPU7 sensor nodes (`/dev/video30`, `/dev/video31`) are hidden from non-root users via udev to prevent apps from accidentally trying to open them directly.
+The device number matters. Apps like Zoom and Telegram do not enumerate the full `/dev/video*` range — they stop at some upper limit. Testing confirmed that `/dev/video34` and `/dev/video35` were still visible to Zoom, while `/dev/video99` was not. The exact cutoff is unknown but likely around 63 (a natural power-of-two boundary). `/dev/video32` was chosen as a safe, low number well within range, while leaving `/dev/video0`–`/dev/video31` free for other devices. The raw IPU7 sensor nodes (`/dev/video30`, `/dev/video31`) are hidden from non-root users via udev to prevent apps from accidentally trying to open them directly.
 
 ### Why NULL and not PAUSED?
 
