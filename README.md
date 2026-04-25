@@ -59,7 +59,7 @@ You should see a preview window and the camera LED should turn on.
 ## Install
 
 ```bash
-git clone https://github.com/Wieczorkiewicz/ipu7-camera-led
+git clone https://github.com/Wieczorkiewicz/thinkpad-ipu7-camera-linux-driver-led
 cd ipu7-camera-led
 sudo bash install.sh
 ```

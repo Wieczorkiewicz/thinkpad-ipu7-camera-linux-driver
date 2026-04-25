@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: ipu7-camera
 Upstream-Contact: Wieczorkiewicz <wieczorkiewicz@users.noreply.github.com>
-Source: https://github.com/Wieczorkiewicz/ipu7-camera
+Source: https://github.com/Wieczorkiewicz/thinkpad-ipu7-camera-linux-driver
 
 Files: *
 Copyright: 2026 Wieczorkiewicz

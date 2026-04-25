@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Wieczorkiewicz <wieczorkiewicz@users.noreply.github.com>
 Build-Depends: debhelper-compat (= 13)
 Standards-Version: 4.6.2
-Homepage: https://github.com/Wieczorkiewicz/ipu7-camera
+Homepage: https://github.com/Wieczorkiewicz/thinkpad-ipu7-camera-linux-driver
 Rules-Requires-Root: no
 
 Package: ipu7-camera

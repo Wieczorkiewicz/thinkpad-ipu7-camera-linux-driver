@@ -4,7 +4,7 @@ pkgver=1.0.0
 pkgrel=1
 pkgdesc="On-demand LED control for Intel IPU7 cameras (Lunar Lake / ThinkPad X1 2-in-1 Gen 10)"
 arch=('any')
-url="https://github.com/Wieczorkiewicz/ipu7-camera"
+url="https://github.com/Wieczorkiewicz/thinkpad-ipu7-camera-linux-driver"
 license=('MIT')
 depends=(
     'python-gobject'
