@@ -2,7 +2,7 @@
 """
 ipu7-camera-dynamic — 静态双 source pipeline：
   IDLE:   icamerasrc 锁在 NULL，videotestsrc 输出黑帧
-  ACTIVE: icamerasrc NULL→PLAYING（首次约 10-15s），selector 切换到它
+  ACTIVE: icamerasrc NULL→PLAYING（首次冷启动约 10-15s，之后即时），selector 切换到它
 
 分辨率自动选择：启动时按 PREFERRED_RESOLUTIONS 优先级从 HAL JSON 筛选，
 依次尝试到 PAUSED 成功为止。支持 CAMERA_RESOLUTION 环境变量覆盖。
