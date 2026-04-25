@@ -106,7 +106,9 @@ sudo bash uninstall.sh
 
 ## Usage
 
-After installing, just open the camera normally in any app (Zoom, Brave, Signal, Telegram, WeChat, …). The camera device appears as `"IPU7 Camera"` at `/dev/video32`.
+After installing, just open the camera normally in any app (Zoom, Brave, Signal, Telegram, WeChat, Element, …). The camera device appears as `"IPU7 Camera"` at `/dev/video32`.
+
+Each app negotiates its own resolution with the device; the pipeline delivers whatever the app requests from the HAL's supported list.
 
 ```bash
 # Quick test
