@@ -1,8 +1,8 @@
 # Maintainer: Wieczorkiewicz <wieczorkiewicz at users dot noreply dot github dot com>
-pkgname=ipu7-camera
+pkgname=thinkpad-ipu7-camera-linux-driver
 pkgver=1.0.0
 pkgrel=1
-pkgdesc="On-demand LED control for Intel IPU7 cameras (Lunar Lake / ThinkPad X1 2-in-1 Gen 10)"
+pkgdesc=\"On-demand Intel IPU7 camera activation for ThinkPad X1 2-in-1 Gen 10 (Lunar Lake)\"
 arch=('any')
 url="https://github.com/Wieczorkiewicz/thinkpad-ipu7-camera-linux-driver"
 license=('MIT')
@@ -14,7 +14,7 @@ depends=(
 optdepends=(
     'gstreamer-icamerasrc: Intel IPU7 GStreamer plugin (required for camera to work)'
 )
-install=ipu7-camera.install
+install=thinkpad-ipu7-camera-linux-driver.install
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
 sha256sums=('SKIP')
 
