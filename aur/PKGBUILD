@@ -1,4 +1,4 @@
-# Maintainer: Wieczorkiewicz
+# Maintainer: Wieczorkiewicz <wieczorkiewicz at users dot noreply dot github dot com>
 pkgname=ipu7-camera
 pkgver=1.0.0
 pkgrel=1
