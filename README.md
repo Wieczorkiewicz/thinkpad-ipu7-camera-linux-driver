@@ -1,4 +1,4 @@
-# ipu7-camera-led
+# ipu7-camera
 
 On-demand Intel IPU7 camera activation for Linux.
 
@@ -60,7 +60,7 @@ You should see a preview window and the camera LED should turn on.
 
 ```bash
 git clone https://github.com/Wieczorkiewicz/thinkpad-ipu7-camera-linux-driver-led
-cd ipu7-camera-led
+cd ipu7-camera
 sudo bash install.sh
 ```
 

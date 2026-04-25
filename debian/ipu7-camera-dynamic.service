@@ -4,7 +4,7 @@ After=graphical-session.target
 
 [Service]
 Type=simple
-EnvironmentFile=-/etc/default/ipu7-camera-led
+EnvironmentFile=-/etc/default/ipu7-camera
 ExecStart=/usr/sbin/ipu7-camera-dynamic
 Restart=on-failure
 RestartSec=5

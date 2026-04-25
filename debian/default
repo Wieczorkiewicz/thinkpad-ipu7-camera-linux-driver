@@ -1,4 +1,4 @@
-# ipu7-camera-led configuration
+# ipu7-camera configuration
 # CAMERA_USER and PIPEWIRE_RUNTIME_DIR are set by the postinst script.
 # To change the target user after installation, edit this file and
 # run: systemctl restart ipu7-camera-dynamic

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ipu7-camera-led uninstaller
+# ipu7-camera uninstaller
 set -euo pipefail
 
 [[ $EUID -eq 0 ]] || { echo "Run with sudo: sudo bash uninstall.sh" >&2; exit 1; }

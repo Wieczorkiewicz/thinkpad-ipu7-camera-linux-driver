@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ipu7-camera-led installer
+# ipu7-camera installer
 # On-demand LED control for Intel IPU7 cameras (Lunar Lake / ThinkPad X1 2-in-1 Gen 10).
 # The camera LED turns on only when an app uses the camera, and off when it stops.
 # Apps see a virtual camera at /dev/video32 ("IPU7 Camera"), visible to Zoom and most
@@ -35,7 +35,7 @@ TARGET_HOME=$(getent passwd "$TARGET_USER" | cut -d: -f6)
 PW_RUNTIME="/run/user/$TARGET_UID"
 
 echo ""
-echo "ipu7-camera-led installer"
+echo "ipu7-camera installer"
 echo "  target user : $TARGET_USER (uid=$TARGET_UID)"
 echo "  PipeWire dir: $PW_RUNTIME"
 echo ""
@@ -125,7 +125,7 @@ info "Service enabled and started."
 
 echo ""
 echo "┌─────────────────────────────────────────────────────┐"
-echo "│  ipu7-camera-led installed successfully             │"
+echo "│  ipu7-camera installed successfully             │"
 echo "│                                                     │"
 echo "│  Camera device : /dev/video32  (\"IPU7 Camera\")      │"
 echo "│  LED turns on when an app uses the camera,          │"
