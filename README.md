@@ -127,6 +127,10 @@ Environment=CAMERA_RESOLUTION=1920x1080x60
 
 `icamerasrc` requires Intel's closed-source HAL and cannot be used by multiple processes simultaneously. The v4l2loopback device `/dev/video32` acts as a broker: a single GStreamer process owns `icamerasrc` and writes frames to the loopback; any number of apps read from it concurrently.
 
+### Why /dev/video32?
+
+The device number matters. Apps like Zoom and Telegram enumerate `/dev/video0` through approximately `/dev/video33` and stop there — they simply do not see higher-numbered devices. Earlier versions of this project used `/dev/video99`, which worked for PipeWire-based apps (Brave, Signal) but was invisible to Zoom and Telegram entirely. `/dev/video32` was chosen as the highest number that reliably falls within the scan range of these apps while leaving `/dev/video0`–`/dev/video31` free for other devices. The raw IPU7 sensor nodes (`/dev/video30`, `/dev/video31`) are hidden from non-root users via udev to prevent apps from accidentally trying to open them directly.
+
 ### Why NULL and not PAUSED?
 
 Intel's IPU7 HAL keeps the camera sensor powered — LED on — even in GStreamer's PAUSED state. Only transitioning to NULL fully releases the sensor. This costs ~10–15 s on each activation but is the only way to reliably release hardware between uses.
