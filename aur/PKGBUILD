@@ -1,10 +1,10 @@
-# Maintainer: YOUR_NAME <your@email.com>
+# Maintainer: Wieczorkiewicz
 pkgname=ipu7-camera
 pkgver=1.0.0
 pkgrel=1
-pkgdesc="On-demand camera bridge for Intel IPU7 / Lunar Lake (icamerasrc → v4l2loopback + PipeWire)"
+pkgdesc="On-demand LED control for Intel IPU7 cameras (Lunar Lake / ThinkPad X1 2-in-1 Gen 10)"
 arch=('any')
-url="https://github.com/YOUR_GITHUB/ipu7-camera"
+url="https://github.com/Wieczorkiewicz/ipu7-camera"
 license=('MIT')
 depends=(
     'python-gobject'
@@ -14,10 +14,8 @@ depends=(
 optdepends=(
     'gstreamer-icamerasrc: Intel IPU7 GStreamer plugin (required for camera to work)'
 )
-backup=('etc/default/ipu7-camera')
 install=ipu7-camera.install
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
-# Before submitting to AUR: replace SKIP with real checksum via `updpkgsums`
 sha256sums=('SKIP')
 
 package() {
@@ -25,9 +23,9 @@ package() {
 
     # Bridge script
     install -Dm755 src/ipu7-camera-dynamic.py \
-                   "$pkgdir/usr/bin/ipu7-camera-dynamic"
+                   "$pkgdir/usr/local/sbin/ipu7-camera-dynamic"
 
-    # Systemd service
+    # Systemd service (placeholder replaced by .install post_install)
     install -Dm644 systemd/ipu7-camera-dynamic.service \
                    "$pkgdir/usr/lib/systemd/system/ipu7-camera-dynamic.service"
 
@@ -35,15 +33,15 @@ package() {
     install -Dm644 wireplumber/51-ipu7-camera.conf \
                    "$pkgdir/etc/wireplumber/wireplumber.conf.d/51-ipu7-camera.conf"
 
-    # modprobe.d — creates /dev/video99 at boot
+    # modprobe.d — creates /dev/video32 at boot
     install -Dm644 modprobe/v4l2loopback-ipu7.conf \
                    "$pkgdir/etc/modprobe.d/v4l2loopback-ipu7.conf"
 
-    # Default config (UID filled in by .install post_install)
-    install -Dm644 /dev/null \
-                   "$pkgdir/etc/default/ipu7-camera"
-    printf '# Set by post_install — edit if you need to change the user.\nCAMERA_USER=\nPIPEWIRE_RUNTIME_DIR=/run/user/1000\n\n# Resolution: auto (highest supported) or explicit e.g. 1920x1080\nCAMERA_RESOLUTION=auto\n' \
-        > "$pkgdir/etc/default/ipu7-camera"
+    # udev rules — expose video32 to logged-in user, hide raw IPU7 nodes
+    install -Dm644 udev/99-ipu7-camera-loopback.rules \
+                   "$pkgdir/etc/udev/rules.d/99-ipu7-camera-loopback.rules"
+    install -Dm644 udev/90-ipu7-hide.rules \
+                   "$pkgdir/etc/udev/rules.d/90-ipu7-hide.rules"
 
     # License
     install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE" 2>/dev/null || true

@@ -9,6 +9,10 @@ override_dh_install:
 	               debian/ipu7-camera/etc/wireplumber/wireplumber.conf.d/51-ipu7-camera.conf
 	install -Dm644 modprobe/v4l2loopback-ipu7.conf \
 	               debian/ipu7-camera/etc/modprobe.d/v4l2loopback-ipu7.conf
+	install -Dm644 udev/99-ipu7-camera-loopback.rules \
+	               debian/ipu7-camera/etc/udev/rules.d/99-ipu7-camera-loopback.rules
+	install -Dm644 udev/90-ipu7-hide.rules \
+	               debian/ipu7-camera/etc/udev/rules.d/90-ipu7-hide.rules
 	install -Dm644 debian/default \
 	               debian/ipu7-camera/etc/default/ipu7-camera
 

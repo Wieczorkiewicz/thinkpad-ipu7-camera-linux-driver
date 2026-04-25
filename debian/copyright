@@ -1,10 +1,10 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: ipu7-camera-led
-Upstream-Contact: YOUR_NAME <your@email.com>
-Source: https://github.com/YOUR_GITHUB/ipu7-camera-led
+Upstream-Name: ipu7-camera
+Upstream-Contact: Wieczorkiewicz <wieczorkiewicz@users.noreply.github.com>
+Source: https://github.com/Wieczorkiewicz/ipu7-camera
 
 Files: *
-Copyright: 2026 YOUR_NAME
+Copyright: 2026 Wieczorkiewicz
 License: MIT
 
 License: MIT

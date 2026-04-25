@@ -1,0 +1,2 @@
+# Grant logged-in user access to the virtual camera loopback device.
+SUBSYSTEM=="video4linux", KERNEL=="video32", TAG+="uaccess"

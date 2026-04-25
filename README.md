@@ -1,32 +1,34 @@
 # ipu7-camera-led
 
-On-demand LED control for Intel IPU7 cameras on Linux.
+On-demand Intel IPU7 camera activation for Linux.
 
 Targets ThinkPad X1 2-in-1 Gen 10 (Intel Lunar Lake) running Ubuntu 24.04 / 26.04, but should work on any system where `icamerasrc` is functional.
 
-**Without this:** the camera LED is always on while any app could use the camera (bridge service always running), or requires manual management.
+**The problem:** Intel's IPU7 HAL (`icamerasrc`) cannot be shared between processes and keeps the camera sensor fully powered whenever it is running — even when no app is actually using the camera.
 
-**With this:** the LED turns on only when an app opens the camera, and turns off within ~1 second after the app stops.
+**What this does:** the HAL is started only when an app opens the camera, and fully shut down the moment the app stops. The camera LED, as a result, accurately reflects actual usage: on when someone is using the camera, off when no one is.
 
 ---
 
 ## How it works
 
-A single Python/GStreamer process runs permanently. It holds a static dual-source pipeline:
+A single Python/GStreamer process runs permanently and holds a dual-source pipeline:
 
 ```
 videotestsrc (black frames) ──┐
-                               ├─ input-selector ─ tee ─┬─ v4l2sink  → /dev/video99
+                               ├─ input-selector ─ tee ─┬─ v4l2sink  → /dev/video32
 icamerasrc (IPU7 camera)   ──┘                          └─ pipewiresink → PipeWire
 ```
 
-- **IDLE:** `icamerasrc` is locked in NULL state (HAL not active, LED off). `videotestsrc` feeds black frames to keep `/dev/video99` alive for apps that check it.
-- **ACTIVE:** when an app opens `/dev/video99`, `icamerasrc` starts up (10–15 s first time, faster on repeat), the selector switches, real frames flow, LED on.
-- When the app closes the camera, the service detects it within ~300 ms and shuts `icamerasrc` back to NULL → LED off.
+- **IDLE:** `icamerasrc` is locked in NULL state — HAL not running, sensor off, LED off. `videotestsrc` feeds black frames to keep `/dev/video32` visible to apps that enumerate devices at startup.
+- **ACTIVE:** when an app opens `/dev/video32`, `icamerasrc` transitions to PLAYING (HAL initialises, ~10–15 s on first use), the selector switches to real frames, LED on.
+- When the app closes the camera, the service detects it within ~300 ms and drives `icamerasrc` back to NULL → HAL fully released, LED off.
 
-Detection uses two signals combined (whichever fires first):
-1. `/sys/devices/virtual/video4linux/video99/state` changes away from `"capture"` (VIDIOC_STREAMOFF)
-2. No external process holds `/dev/video99` open (fd-based check)
+Detection combines two signals:
+1. `/sys/devices/virtual/video4linux/video32/state` leaves `"capture"` (VIDIOC_STREAMOFF)
+2. No external process holds `/dev/video32` open
+
+Both must be false before the HAL is shut down.
 
 ---
 
@@ -50,23 +52,23 @@ gst-launch-1.0 icamerasrc device-name=0 \
   ! "video/x-raw,format=NV12,width=1280,height=720,framerate=30/1" \
   ! videoconvert ! autovideosink
 ```
-The camera LED should turn on and you should see a preview window.
+You should see a preview window and the camera LED should turn on.
 
 ---
 
 ## Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ipu7-camera-led
+git clone https://github.com/Wieczorkiewicz/ipu7-camera-led
 cd ipu7-camera-led
 sudo bash install.sh
 ```
 
 The installer:
 1. Checks all prerequisites
-2. Patches `v4l2loopback` to report `driver="uvcvideo"` (required for Firefox / Zen to enumerate the camera)
-3. Installs a `modprobe.d` config to create `/dev/video99` at boot
-4. Installs a WirePlumber config to hide raw IPU7 nodes and expose a clean camera node
+2. Installs a `modprobe.d` config to create `/dev/video32` (`"IPU7 Camera"`) at boot
+3. Installs udev rules to expose `/dev/video32` to the logged-in user and hide the raw IPU7 sensor nodes
+4. Installs a WirePlumber config
 5. Installs the bridge script to `/usr/local/sbin/ipu7-camera-dynamic`
 6. Enables and starts `ipu7-camera-dynamic.service`
 
@@ -80,11 +82,12 @@ sudo bash uninstall.sh
 
 ## Usage
 
-After installing, just use the camera normally:
+After installing, just open the camera normally in any app (Zoom, Brave, Signal, Telegram, …). The camera device appears as `"IPU7 Camera"` at `/dev/video32`.
 
-- Open any camera app (Brave, Firefox, Signal, `gst-launch-1.0 v4l2src device=/dev/video99 ! autovideosink`, …)
-- LED turns on automatically (first activation takes 10–15 s while HAL initialises; subsequent ones are similar since the HAL fully closes to turn the LED off)
-- Stop using the camera → LED turns off within ~1 s
+```bash
+# Quick test
+gst-launch-1.0 v4l2src device=/dev/video32 ! videoconvert ! autovideosink
+```
 
 ### Logs
 
@@ -92,13 +95,21 @@ After installing, just use the camera normally:
 journalctl -u ipu7-camera-dynamic -f
 ```
 
+### Resolution
+
+Resolution is selected automatically from the HAL's supported list, highest first (default: 3840×2160@30). Override with an environment variable:
+
+```bash
+# In /etc/systemd/system/ipu7-camera-dynamic.service [Service] section:
+Environment=CAMERA_RESOLUTION=1920x1080x60
+```
+
 ---
 
 ## Known limitations
 
-- **First / every activation takes 10–15 s.** The HAL must fully initialise from NULL each time. This is required to turn the LED off reliably — keeping the HAL in PAUSED state would leave the LED on.
-- **Zen browser (Firefox Flatpak):** if Zen is running and has accessed any raw IPU7 node (`/dev/video0`–`/dev/video31`), it holds kernel DMA buffers and blocks the HAL. Close Zen before using other camera apps.
-- **Telegram / Zoom:** not tested.
+- **Every activation takes ~10–15 s.** The HAL must initialise from scratch each time the camera is opened. This is the cost of fully releasing the sensor between uses — keeping the HAL in PAUSED would be faster but would leave the sensor (and LED) on permanently.
+- **Firefox / Zen:** camera access via the xdg-desktop-portal Camera interface does not currently work. Direct V4L2 access (most native apps) and PipeWire access (Flatpak apps) both work.
 
 ---
 
@@ -106,16 +117,12 @@ journalctl -u ipu7-camera-dynamic -f
 
 ### Why v4l2loopback?
 
-`icamerasrc` requires Intel's closed-source HAL and cannot be used by multiple processes simultaneously. A v4l2loopback device (`/dev/video99`) acts as a broker: a single GStreamer process owns `icamerasrc` and writes frames to the loopback; any number of apps read from it.
-
-### Why the driver-name patch?
-
-Firefox-based browsers enumerate `/dev/video*` directly using `VIDIOC_QUERYCAP` and reject any device whose `driver` field is not `"uvcvideo"`. The patch changes the string in the v4l2loopback kernel module source and rebuilds via DKMS.
+`icamerasrc` requires Intel's closed-source HAL and cannot be used by multiple processes simultaneously. The v4l2loopback device `/dev/video32` acts as a broker: a single GStreamer process owns `icamerasrc` and writes frames to the loopback; any number of apps read from it concurrently.
 
 ### Why NULL and not PAUSED?
 
-Intel's IPU7 HAL keeps the camera sensor powered (LED on) even in GStreamer's PAUSED state. Only transitioning to NULL fully releases the sensor. This costs ~10–15 s on re-activation but is the only way to reliably turn off the LED.
+Intel's IPU7 HAL keeps the camera sensor powered — LED on — even in GStreamer's PAUSED state. Only transitioning to NULL fully releases the sensor. This costs ~10–15 s on each activation but is the only way to reliably release hardware between uses.
 
 ### colorimetry
 
-`icamerasrc` outputs NV12 with BT.709 colorimetry. The v4l2sink on video99 expects bt601 (from the idle `videotestsrc`). The bridge enforces `colorimetry=bt601` in the caps after `videoconvert` to prevent a mismatch that causes black frames.
+`icamerasrc` outputs NV12. The pipeline converts to YUY2 with `colorimetry=bt601` before writing to v4l2loopback, matching what `videotestsrc` produces in IDLE state and avoiding format negotiation failures on activation.

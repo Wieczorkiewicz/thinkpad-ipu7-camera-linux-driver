@@ -20,12 +20,15 @@ rm -f /usr/local/sbin/ipu7-camera-dynamic
 echo "Removing modprobe config..."
 rm -f /etc/modprobe.d/v4l2loopback-ipu7.conf
 
+echo "Removing udev rules..."
+rm -f /etc/udev/rules.d/99-ipu7-camera-loopback.rules
+rm -f /etc/udev/rules.d/90-ipu7-hide.rules
+udevadm control --reload-rules
+udevadm trigger --subsystem-match=video4linux
+
 echo "Removing WirePlumber config..."
 rm -f "$TARGET_HOME/.config/wireplumber/wireplumber.conf.d/51-ipu7-camera.conf"
 
 echo ""
-echo "Uninstall complete. The v4l2loopback driver-name patch is NOT reversed"
-echo "(it has no side effects for normal use). To reverse it manually:"
-echo "  restore /usr/src/v4l2loopback-*/v4l2loopback.c.orig and rebuild with dkms."
-echo ""
+echo "Uninstall complete."
 echo "Reboot or reload modules to apply changes."

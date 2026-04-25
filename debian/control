@@ -1,10 +1,10 @@
 Source: ipu7-camera
 Section: video
 Priority: optional
-Maintainer: YOUR_NAME <your@email.com>
+Maintainer: Wieczorkiewicz <wieczorkiewicz@users.noreply.github.com>
 Build-Depends: debhelper-compat (= 13)
 Standards-Version: 4.6.2
-Homepage: https://github.com/YOUR_GITHUB/ipu7-camera
+Homepage: https://github.com/Wieczorkiewicz/ipu7-camera
 Rules-Requires-Root: no
 
 Package: ipu7-camera
@@ -16,14 +16,17 @@ Depends: ${misc:Depends},
  gstreamer1.0-plugins-bad,
  v4l2loopback-dkms
 Recommends: gstreamer1.0-icamerasrc
-Description: On-demand camera bridge for Intel IPU7 (Lunar Lake)
- Enables Intel IPU7 cameras on Linux by bridging icamerasrc to a
- v4l2loopback device (/dev/video99) and PipeWire, with on-demand
- HAL activation: the camera hardware initialises only when an
- application opens it, and is fully released when the application stops.
+Description: On-demand LED control for Intel IPU7 cameras
+ Manages the camera LED on Intel IPU7 devices (ThinkPad X1 2-in-1 Gen 10
+ and similar Lunar Lake systems) so it lights up only when an application
+ is actively using the camera.
  .
- A single GStreamer process holds a static dual-source pipeline so that
- /dev/video99 is always present for applications to enumerate, while the
- actual camera hardware stays idle until needed.
+ A single GStreamer process holds a dual-source pipeline: videotestsrc feeds
+ black frames while idle; icamerasrc is started on demand when an application
+ opens the camera and shut down (LED off) when it stops.
+ .
+ The virtual camera device /dev/video32 ("IPU7 Camera") is visible to Zoom
+ and other V4L2-based applications. A PipeWire node is also published for
+ Flatpak and portal-based applications (Brave, Signal, Telegram).
  .
  Requires icamerasrc and the Intel IPU7 Camera HAL to be installed separately.

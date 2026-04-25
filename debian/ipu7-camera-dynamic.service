@@ -1,6 +1,6 @@
 [Unit]
 Description=IPU7 Camera Dynamic Bridge (on-demand LED)
-After=network.target
+After=graphical-session.target
 
 [Service]
 Type=simple

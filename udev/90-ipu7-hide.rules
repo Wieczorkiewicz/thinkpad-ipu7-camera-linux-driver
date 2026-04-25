@@ -1,0 +1,4 @@
+# Hide raw IPU7 sensor nodes from non-root users so apps (e.g. Zoom) don't
+# try to open them directly — they are kernel-internal devices, not user cameras.
+SUBSYSTEM=="video4linux", KERNEL=="video30", MODE="0600"
+SUBSYSTEM=="video4linux", KERNEL=="video31", MODE="0600"
