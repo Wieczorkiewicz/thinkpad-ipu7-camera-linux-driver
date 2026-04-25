@@ -169,11 +169,11 @@ Intel's IPU7 HAL keeps the camera sensor powered — LED on — even in GStreame
 
 ## Other sensors on the same hardware (potential future work)
 
-The ThinkPad X1 2-in-1 Gen 10 (Lunar Lake) has two more sensor subsystems beyond the RGB camera:
+The ThinkPad X1 2-in-1 Gen 10 (Lunar Lake) has two more sensor subsystems beyond the RGB camera. On Windows, these work together as a seamless unlock sequence: the presence sensor wakes the machine when someone approaches, the IR illuminator and IR camera activate for Windows Hello face recognition, and an IR floodlight briefly fires to assist in low light. If the face is recognised the screen unlocks immediately; otherwise it falls back to fingerprint or PIN. All three components are physically present on Linux — none of them are fully functional yet.
 
 **IR camera (face recognition)**
 
-The IR sensor (`INT347D`, managed by Intel CVS `INTC10DE`) is physically present and its kernel driver (`intel_cvs`) loads successfully. It does not appear as a usable video node today — no `icamerasrc` device index has been confirmed for it. On Windows it powers face-unlock (Windows Hello). There is no Linux face-recognition framework that supports it yet, but the hardware path through the IPU7 ISP may be explorable via `icamerasrc device-name=1` or similar.
+The IR sensor (`INT347D`, managed by Intel CVS `INTC10DE`) is physically present and its kernel driver (`intel_cvs`) loads successfully. It does not appear as a usable video node today — no `icamerasrc` device index has been confirmed for it. There is no Linux face-recognition framework that supports it yet, but the hardware path through the IPU7 ISP may be explorable via `icamerasrc device-name=1` or similar.
 
 **Presence detection**
 
