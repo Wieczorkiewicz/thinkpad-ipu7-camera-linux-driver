@@ -145,6 +145,10 @@ Environment=CAMERA_RESOLUTION=1920x1080x60
 
   If you have experience with WirePlumber session management or xdg-desktop-portal on KDE Plasma 6, contributions are very welcome.
 
+- **Idle CPU overhead (~15–20%):** The GStreamer pipeline runs continuously at full frame rate (e.g. 1920×1080@30 or 3840×2160@30) even when no application is using the camera, because `videotestsrc` must match the downstream caps. WirePlumber holds `/dev/video32` open for device enumeration, which keeps the sysfs state at `capture` and the pipeline in its IDLE branch at all times.
+
+  The proper fix is a WirePlumber Lua script that monitors PipeWire graph events and signals the Python bridge to start/stop `icamerasrc` only when a real consumer (not WirePlumber's own routing) connects — similar to how macOS CoreMediaIO handles on-demand hardware activation. Estimated scope: ~150 lines of Lua + minor changes to the Python bridge. The `wireplumber/` directory is the intended home for this work.
+
 ---
 
 ## Technical notes
